@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Simulador Banco · Inicio
+{% endblock %}
+
+
+{% block body %}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <h1 class="display-4 mb-3">Simulador Financiero</h1>
+            <p class="lead text-muted">Herramientas de cálculo financiero: anualidades, amortización, interés compuesto.</p>
+            <hr class="my-4">
+            <div class="row mt-5">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Anualidad</h5>
+                            <p class="card-text">Calcula anualidad.</p>
+                            <a href="{{ url_for('anualidad') }}" class="btn btn-primary">Ir</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Amortización</h5>
+                            <p class="card-text">Calcula la tabla de amortización de préstamos.</p>
+                            <a href="{{ url_for('amortizacion') }}" class="btn btn-primary">Ir</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Interés compuesto</h5>
+                            <p class="card-text">Calcula el interés compuesto de una inversión.</p>
+                            <a href="{{ url_for('interes_compuesto') }}" class="btn btn-primary">Ir</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

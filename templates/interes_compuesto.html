@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Simulador Banco · Interés compuesto
+{% endblock %}
+
+{% block head %}
+<style>
+    .result-card {
+        background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+        border: 2px solid #66bb6a;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .result-card h3 {
+        color: #2e7d32;
+        font-weight: 700;
+    }
+    .result-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1b5e20;
+    }
+    .field-group {
+        background: #fff;
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        transition: opacity 0.3s ease;
+    }
+    .field-group.disabled-field {
+        opacity: 0.45;
+        pointer-events: none;
+    }
+    .field-group label {
+        font-weight: 600;
+        color: #37474f;
+        margin-bottom: 0.4rem;
+    }
+    .field-group .form-text {
+        font-size: 0.8rem;
+        color: #78909c;
+    }
+    .badge-info {
+        background-color: #e3f2fd;
+        color: #1565c0;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h1 class="display-5 mb-1">Calculadora de Interés Compuesto</h1>
+            <p class="text-muted mb-4">
+                Resuelve cualquier variable del interés compuesto: valor presente (VP), valor futuro (VF),
+                número de períodos (n) o tasa de interés (i).
+            </p>
+
+            <form method="POST" id="interesCompuestoForm">
+                <div class="row">
+                    <!-- Left column -->
+                    <div class="col-md-6">
+                        <!-- Variable desconocida -->
+                        <div class="field-group">
+                            <label for="variable_desconocida">Variable a calcular</label>
+                            <select class="form-select" name="variable_desconocida" id="variable_desconocida" required>
+                                <option value="vf" {{ 'selected' if data and data.variable_desconocida == 'vf' else '' }}>Valor Futuro (VF)</option>
+                                <option value="vp" {{ 'selected' if data and data.variable_desconocida == 'vp' else '' }}>Valor Presente (VP)</option>
+                                <option value="n" {{ 'selected' if data and data.variable_desconocida == 'n' else '' }}>Número de períodos (n)</option>
+                                <option value="i" {{ 'selected' if data and data.variable_desconocida == 'i' else '' }}>Tasa de interés (i)</option>
+                            </select>
+                            <div class="form-text">Selecciona qué variable deseas calcular. Los campos correspondientes se habilitarán o deshabilitarán automáticamente.</div>
+                        </div>
+
+                        <!-- VP -->
+                        <div class="field-group" id="field-vp">
+                            <label for="vp">Valor Presente (VP)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="any" class="form-control" name="vp" id="vp"
+                                       placeholder="Ej: 1000000"
+                                       value="{{ data.vp if data and data.vp is not none else '' }}">
+                            </div>
+                        </div>
+
+                        <!-- VF -->
+                        <div class="field-group" id="field-vf">
+                            <label for="vf">Valor Futuro (VF)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="any" class="form-control" name="vf" id="vf"
+                                       placeholder="Ej: 2000000"
+                                       value="{{ data.vf if data and data.vf is not none else '' }}">
+                            </div>
+                        </div>
+
+                        <!-- Tasa de interés -->
+                        <div class="field-group" id="field-i">
+                            <label for="tasa_interes">Tasa de interés (i)</label>
+                            <div class="input-group">
+                                <input type="number" step="any" class="form-control" name="tasa_interes" id="tasa_interes"
+                                       placeholder="Ej: 12" value="{{ data.tasa_interes if data and data.tasa_interes is not none else '' }}">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="form-text">Ingresa el valor numérico de la tasa (sin el símbolo %).</div>
+                        </div>
+                    </div>
+
+                    <!-- Right column -->
+                    <div class="col-md-6">
+                        <!-- Tipo de tasa -->
+                        <div class="field-group">
+                            <label for="tipo_tasa">Tipo de tasa</label>
+                            <select class="form-select" name="tipo_tasa" id="tipo_tasa">
+                                <option value="EA" {{ 'selected' if data and data.tipo_tasa == 'EA' else '' }}>EA — Efectiva Anual</option>
+                                <option value="EM" {{ 'selected' if data and data.tipo_tasa == 'EM' else '' }}>EM — Efectiva Mensual</option>
+                                <option value="ET" {{ 'selected' if data and data.tipo_tasa == 'ET' else '' }}>ET — Efectiva Trimestral</option>
+                                <option value="ES" {{ 'selected' if data and data.tipo_tasa == 'ES' else '' }}>ES — Efectiva Semestral</option>
+                                <option value="MV" {{ 'selected' if data and data.tipo_tasa == 'MV' else '' }}>MV / CM / NM — Nominal Mensual Vencida</option>
+                                <option value="TV" {{ 'selected' if data and data.tipo_tasa == 'TV' else '' }}>TV / CT / NT — Nominal Trimestral Vencida</option>
+                                <option value="SV" {{ 'selected' if data and data.tipo_tasa == 'SV' else '' }}>SV / CS / NS — Nominal Semestral Vencida</option>
+                                <option value="NV" {{ 'selected' if data and data.tipo_tasa == 'NV' else '' }}>NV — Nominal Vencida (otra frecuencia)</option>
+                                <option value="NAA" {{ 'selected' if data and data.tipo_tasa == 'NAA' else '' }}>NAA — Nominal Anual Anticipada</option>
+                            </select>
+                            <div class="form-text">La tasa se convertirá automáticamente a la frecuencia de pago seleccionada.</div>
+                        </div>
+
+                        <!-- Frecuencia de pago -->
+                        <div class="field-group">
+                            <label for="frecuencia_pago">Frecuencia de capitalización / pago</label>
+                            <select class="form-select" name="frecuencia_pago" id="frecuencia_pago">
+                                <option value="Diario" {{ 'selected' if data and data.frecuencia_pago == 'Diario' else '' }}>Diario</option>
+                                <option value="Semanal" {{ 'selected' if data and data.frecuencia_pago == 'Semanal' else '' }}>Semanal</option>
+                                <option value="Quincenal" {{ 'selected' if data and data.frecuencia_pago == 'Quincenal' else '' }}>Quincenal</option>
+                                <option value="Mensual" {{ 'selected' if data and data.frecuencia_pago == 'Mensual' else '' }}>Mensual</option>
+                                <option value="Bimestral" {{ 'selected' if data and data.frecuencia_pago == 'Bimestral' else '' }}>Bimestral</option>
+                                <option value="Trimestral" {{ 'selected' if data and data.frecuencia_pago == 'Trimestral' else '' }}>Trimestral</option>
+                                <option value="Cuatrimestral" {{ 'selected' if data and data.frecuencia_pago == 'Cuatrimestral' else '' }}>Cuatrimestral</option>
+                                <option value="Semestral" {{ 'selected' if data and data.frecuencia_pago == 'Semestral' else '' }}>Semestral</option>
+                                <option value="Anual" {{ 'selected' if data and data.frecuencia_pago == 'Anual' else '' }}>Anual</option>
+                            </select>
+                            <div class="form-text">Periodicidad con la que se capitalizan los intereses.</div>
+                        </div>
+
+                        <!-- Número de períodos -->
+                        <div class="field-group" id="field-n">
+                            <label for="periodos">Número de períodos (n)</label>
+                            <input type="number" step="any" class="form-control" name="periodos" id="periodos"
+                                   placeholder="Ej: 36"
+                                   value="{{ data.periodos if data and data.periodos is not none else '' }}">
+                            <div class="form-text">Cantidad total de períodos según la frecuencia seleccionada.</div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <span class="me-2"></span> Calcular
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Result section -->
+            {% if resultado is not none %}
+            <div class="result-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-1">Resultado</h3>
+                        <p class="mb-0 text-muted">
+                            {% if data %}
+                                Variable calculada: <strong>
+                                {% if data.variable_desconocida == 'vf' %}Valor Futuro (VF)
+                                {% elif data.variable_desconocida == 'vp' %}Valor Presente (VP)
+                                {% elif data.variable_desconocida == 'n' %}Número de períodos (n)
+                                {% elif data.variable_desconocida == 'i' %}Tasa de interés (i)
+                                {% endif %}</strong>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="result-value mt-2">
+                    {% if data.variable_desconocida in ('vp', 'vf') %}
+                        $ {{ "{:,.3f}".format(resultado) }}
+                    {% elif data.variable_desconocida == 'i' %}
+                        {{ "{:.6f}".format(resultado * 100) }} %
+                        <small class="text-muted" style="font-size:0.9rem;">(tasa efectiva periódica — {{ data.frecuencia_pago if data else '' }})</small>
+                    {% elif data.variable_desconocida == 'n' %}
+                        {{ resultado }}
+                        <small class="text-muted" style="font-size:0.9rem;">períodos ({{ data.frecuencia_pago if data else '' }}s)</small>
+                    {% endif %}
+                </div>
+                {% if error %}
+                <div class="alert alert-danger mt-3 mb-0">
+                    {{ error }}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if error and resultado is none %}
+            <div class="alert alert-danger mt-4">
+                {{ error }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const variableSelect = document.getElementById('variable_desconocida');
+    const fields = {
+        vp: document.getElementById('field-vp'),
+        vf: document.getElementById('field-vf'),
+        i: document.getElementById('field-i'),
+        n: document.getElementById('field-n'),
+    };
+    const inputs = {
+        vp: document.getElementById('vp'),
+        vf: document.getElementById('vf'),
+        i: document.getElementById('tasa_interes'),
+        n: document.getElementById('periodos'),
+    };
+
+    function updateFields() {
+        const variable = variableSelect.value;
+
+        // The unknown variable field is always disabled
+        for (const [key, field] of Object.entries(fields)) {
+            if (key === variable) {
+                field.classList.add('disabled-field');
+                inputs[key].disabled = true;
+                inputs[key].required = false;
+            } else {
+                field.classList.remove('disabled-field');
+                inputs[key].disabled = false;
+            }
+        }
+    }
+
+    variableSelect.addEventListener('change', updateFields);
+
+    // Initial run
+    updateFields();
+})();
+</script>
+{% endblock %}
