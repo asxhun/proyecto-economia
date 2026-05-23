@@ -150,13 +150,40 @@ Simulador Banco · Interés compuesto
                             <div class="form-text">Periodicidad con la que se capitalizan los intereses.</div>
                         </div>
 
-                        <!-- Número de períodos -->
+                        <!-- Número de períodos (n) -->
                         <div class="field-group" id="field-n">
-                            <label for="periodos">Número de períodos (n)</label>
-                            <input type="number" step="any" class="form-control" name="periodos" id="periodos"
-                                   placeholder="Ej: 36"
-                                   value="{{ data.periodos if data and data.periodos is not none else '' }}">
-                            <div class="form-text">Cantidad total de períodos según la frecuencia seleccionada.</div>
+                            <label>Número de períodos (n)</label>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <label class="small text-muted" for="n_years">Años</label>
+                                    <input type="number" step="any" class="form-control" name="n_years" id="n_years"
+                                           placeholder="10"
+                                           value="{{ data.n_years if data and data.n_years is not none else '' }}">
+                                </div>
+                                <div class="col-4">
+                                    <label class="small text-muted" for="n_months">Meses</label>
+                                    <input type="number" step="any" class="form-control" name="n_months" id="n_months"
+                                           placeholder="4"
+                                           value="{{ data.n_months if data and data.n_months is not none else '' }}">
+                                </div>
+                                <div class="col-4">
+                                    <label class="small text-muted" for="n_days">Días</label>
+                                    <input type="number" step="any" class="form-control" name="n_days" id="n_days"
+                                           placeholder="0"
+                                           value="{{ data.n_days if data and data.n_days is not none else '' }}">
+                                </div>
+                            </div>
+                            <div class="form-text mt-2">Descompón n en años, meses y días. Se combinarán automáticamente según la unidad de tiempo seleccionada.</div>
+                        </div>
+                        <!-- Unidad de tiempo de n -->
+                        <div class="field-group" id="field-n-unit">
+                            <label for="unidad_tiempo_n">Unidad de tiempo de n</label>
+                            <select class="form-select" name="unidad_tiempo_n" id="unidad_tiempo_n">
+                                <option value="Días" {{ 'selected' if data and data.unidad_tiempo_n == 'Días' else '' }}>Días</option>
+                                <option value="Meses" {{ 'selected' if data and data.unidad_tiempo_n == 'Meses' else '' }}>Meses</option>
+                                <option value="Años" {{ 'selected' if data and data.unidad_tiempo_n == 'Años' else '' }}>Años</option>
+                            </select>
+                            <div class="form-text">Especifica qué representa cada período en n (días, meses o años).</div>
                         </div>
 
                         <!-- Submit -->
@@ -192,10 +219,10 @@ Simulador Banco · Interés compuesto
                         $ {{ "{:,.3f}".format(resultado) }}
                     {% elif data.variable_desconocida == 'i' %}
                         {{ "{:.6f}".format(resultado * 100) }} %
-                        <small class="text-muted" style="font-size:0.9rem;">(tasa efectiva periódica — {{ data.frecuencia_pago if data else '' }})</small>
+                        <small class="text-muted" style="font-size:0.9rem;">({{ data.tipo_tasa if data else 'EA' }}{% if data.tipo_tasa in ('MV','CM','NM','TV','CT','NT','SV','CS','NS','NV','NAA') %} — Nominal{% endif %})</small>
                     {% elif data.variable_desconocida == 'n' %}
                         {{ resultado }}
-                        <small class="text-muted" style="font-size:0.9rem;">períodos ({{ data.frecuencia_pago if data else '' }}s)</small>
+                        <small class="text-muted" style="font-size:0.9rem;">período(s) ({{ data.frecuencia_pago if data else '' }}(es)){% if data and data.n_breakdown %}{% endif %}</small>
                     {% endif %}
                 </div>
                 {% if error %}
@@ -223,12 +250,18 @@ Simulador Banco · Interés compuesto
         vf: document.getElementById('field-vf'),
         i: document.getElementById('field-i'),
         n: document.getElementById('field-n'),
+        n_unit: document.getElementById('field-n-unit'),
     };
     const inputs = {
         vp: document.getElementById('vp'),
         vf: document.getElementById('vf'),
         i: document.getElementById('tasa_interes'),
-        n: document.getElementById('periodos'),
+        n: [
+            document.getElementById('n_years'),
+            document.getElementById('n_months'),
+            document.getElementById('n_days'),
+            document.getElementById('unidad_tiempo_n'),
+        ],
     };
 
     function updateFields() {
@@ -238,11 +271,21 @@ Simulador Banco · Interés compuesto
         for (const [key, field] of Object.entries(fields)) {
             if (key === variable) {
                 field.classList.add('disabled-field');
-                inputs[key].disabled = true;
-                inputs[key].required = false;
+                const inp = inputs[key];
+                if (Array.isArray(inp)) {
+                    inp.forEach(function(el) { el.disabled = true; el.required = false; });
+                } else {
+                    inp.disabled = true;
+                    inp.required = false;
+                }
             } else {
                 field.classList.remove('disabled-field');
-                inputs[key].disabled = false;
+                const inp = inputs[key];
+                if (Array.isArray(inp)) {
+                    inp.forEach(function(el) { el.disabled = false; });
+                } else {
+                    inp.disabled = false;
+                }
             }
         }
     }
