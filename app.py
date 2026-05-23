@@ -493,6 +493,16 @@ def interes_compuesto():
         else:
             n = n_years + n_months / 12.0 + n_days / 360.0
 
+        # ── Validate non-negative values ──
+        if vp < 0:
+            error = "El Valor Presente (VP) no puede ser negativo."
+        elif vf < 0:
+            error = "El Valor Futuro (VF) no puede ser negativo."
+        elif tasa_val < 0:
+            error = "La tasa de interés no puede ser negativa."
+        elif n_years < 0 or n_months < 0 or n_days < 0:
+            error = "Los años, meses y días no pueden ser negativos."
+
         data['vp'] = vp
         data['vf'] = vf
         data['tasa_interes'] = tasa_val
