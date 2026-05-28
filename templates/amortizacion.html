@@ -80,11 +80,10 @@ Simulador Banco · Amortización
                                 <option value="EM" {% if data and data.tipo_tasa == 'EM' %}selected{% endif %}>EM — Efectiva Mensual</option>
                                 <option value="ET" {% if data and data.tipo_tasa == 'ET' %}selected{% endif %}>ET — Efectiva Trimestral</option>
                                 <option value="ES" {% if data and data.tipo_tasa == 'ES' %}selected{% endif %}>ES — Efectiva Semestral</option>
-                                <option value="MV" {% if data and data.tipo_tasa == 'MV' %}selected{% endif %}>MV / CM / NM — Nominal Mensual Vencida</option>
-                                <option value="TV" {% if data and data.tipo_tasa == 'TV' %}selected{% endif %}>TV / CT / NT — Nominal Trimestral Vencida</option>
-                                <option value="SV" {% if data and data.tipo_tasa == 'SV' %}selected{% endif %}>SV / CS / NS — Nominal Semestral Vencida</option>
-                                <option value="NV" {% if data and data.tipo_tasa == 'NV' %}selected{% endif %}>NV — Nominal Vencida (otra frecuencia) </option>
-                                <option value="NAA" {% if data and data.tipo_tasa == 'NAA' %}selected{% endif %}>NAA — Nominal Anual Anticipada</option>
+                                <option value="NM" {% if data and data.tipo_tasa == 'NM' %}selected{% endif %}>NM — Nominal Mes Vencido / CM / MV (% anual que se divide entre 12)</option>
+                                <option value="NT" {% if data and data.tipo_tasa == 'NT' %}selected{% endif %}>NT — Nominal Trimestre Vencido / CT / TV (se divide entre 4)</option>
+                                <option value="NS" {% if data and data.tipo_tasa == 'NS' %}selected{% endif %}>NS — Nominal Semestral Vencido / CS / SV (se divide entre 2)</option>
+                                
                             </select>
                             <div class="form-text">La tasa se convertirá automáticamente a la frecuencia de pago seleccionada.</div>
                         </div>

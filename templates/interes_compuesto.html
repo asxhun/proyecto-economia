@@ -124,31 +124,13 @@ Simulador Banco · Interés compuesto
                                 <option value="EM" {{ 'selected' if data and data.tipo_tasa == 'EM' else '' }}>EM — Efectiva Mensual</option>
                                 <option value="ET" {{ 'selected' if data and data.tipo_tasa == 'ET' else '' }}>ET — Efectiva Trimestral</option>
                                 <option value="ES" {{ 'selected' if data and data.tipo_tasa == 'ES' else '' }}>ES — Efectiva Semestral</option>
-                                <option value="MV" {{ 'selected' if data and data.tipo_tasa == 'MV' else '' }}>MV / CM / NM — Nominal Mensual Vencida</option>
-                                <option value="TV" {{ 'selected' if data and data.tipo_tasa == 'TV' else '' }}>TV / CT / NT — Nominal Trimestral Vencida</option>
-                                <option value="SV" {{ 'selected' if data and data.tipo_tasa == 'SV' else '' }}>SV / CS / NS — Nominal Semestral Vencida</option>
-                                <option value="NV" {{ 'selected' if data and data.tipo_tasa == 'NV' else '' }}>NV — Nominal Vencida (otra frecuencia)</option>
-                                <option value="NAA" {{ 'selected' if data and data.tipo_tasa == 'NAA' else '' }}>NAA — Nominal Anual Anticipada</option>
+                                <option value="NM" {{ 'selected' if data and data.tipo_tasa == 'NM' else '' }}>NM — Nominal Mes Vencido / CM / MV (% anual que se divide entre 12)</option>
+                                <option value="NT" {{ 'selected' if data and data.tipo_tasa == 'NT' else '' }}>NT — Nominal Trimestre Vencido / CT / TV (se divide entre 4)</option>
+                                <option value="NS" {{ 'selected' if data and data.tipo_tasa == 'NS' else '' }}>NS — Nominal Semestral Vencido / CS / SV (se divide entre 2)</option>
                             </select>
-                            <div class="form-text">La tasa se convertirá automáticamente a la frecuencia de pago seleccionada.</div>
+                            <div class="form-text">Las tasas efectivas (EA, ES, ET, EM) ya tienen su i efectiva. Las nominales (NM, NT, NS) usan i = j/m.</div>
                         </div>
 
-                        <!-- Frecuencia de pago -->
-                        <div class="field-group">
-                            <label for="frecuencia_pago">Frecuencia de capitalización / pago</label>
-                            <select class="form-select" name="frecuencia_pago" id="frecuencia_pago">
-                                <option value="Diario" {{ 'selected' if data and data.frecuencia_pago == 'Diario' else '' }}>Diario</option>
-                                <option value="Semanal" {{ 'selected' if data and data.frecuencia_pago == 'Semanal' else '' }}>Semanal</option>
-                                <option value="Quincenal" {{ 'selected' if data and data.frecuencia_pago == 'Quincenal' else '' }}>Quincenal</option>
-                                <option value="Mensual" {{ 'selected' if data and data.frecuencia_pago == 'Mensual' else '' }}>Mensual</option>
-                                <option value="Bimestral" {{ 'selected' if data and data.frecuencia_pago == 'Bimestral' else '' }}>Bimestral</option>
-                                <option value="Trimestral" {{ 'selected' if data and data.frecuencia_pago == 'Trimestral' else '' }}>Trimestral</option>
-                                <option value="Cuatrimestral" {{ 'selected' if data and data.frecuencia_pago == 'Cuatrimestral' else '' }}>Cuatrimestral</option>
-                                <option value="Semestral" {{ 'selected' if data and data.frecuencia_pago == 'Semestral' else '' }}>Semestral</option>
-                                <option value="Anual" {{ 'selected' if data and data.frecuencia_pago == 'Anual' else '' }}>Anual</option>
-                            </select>
-                            <div class="form-text">Periodicidad con la que se capitalizan los intereses.</div>
-                        </div>
 
                         <!-- Número de períodos (n) -->
                         <div class="field-group" id="field-n">
@@ -173,17 +155,7 @@ Simulador Banco · Interés compuesto
                                            value="{{ data.n_days if data and data.n_days is not none else '' }}">
                                 </div>
                             </div>
-                            <div class="form-text mt-2">Descompón n en años, meses y días. Se combinarán automáticamente según la unidad de tiempo seleccionada.</div>
-                        </div>
-                        <!-- Unidad de tiempo de n -->
-                        <div class="field-group" id="field-n-unit">
-                            <label for="unidad_tiempo_n">Unidad de tiempo de n</label>
-                            <select class="form-select" name="unidad_tiempo_n" id="unidad_tiempo_n">
-                                <option value="Días" {{ 'selected' if data and data.unidad_tiempo_n == 'Días' else '' }}>Días</option>
-                                <option value="Meses" {{ 'selected' if data and data.unidad_tiempo_n == 'Meses' else '' }}>Meses</option>
-                                <option value="Años" {{ 'selected' if data and data.unidad_tiempo_n == 'Años' else '' }}>Años</option>
-                            </select>
-                            <div class="form-text">Especifica qué representa cada período en n (días, meses o años).</div>
+                            <div class="form-text mt-2">Descompón n en años, meses y días. Se convertirán automáticamente al período natural del tipo de tasa seleccionado.</div>
                         </div>
 
                         <!-- Submit -->
@@ -219,10 +191,10 @@ Simulador Banco · Interés compuesto
                         $ {{ "{:,.3f}".format(resultado) }}
                     {% elif data.variable_desconocida == 'i' %}
                         {{ "{:.6f}".format(resultado * 100) }} %
-                        <small class="text-muted" style="font-size:0.9rem;">({{ data.tipo_tasa if data else 'EA' }}{% if data.tipo_tasa in ('MV','CM','NM','TV','CT','NT','SV','CS','NS','NV','NAA') %} — Nominal{% endif %})</small>
+                        <small class="text-muted" style="font-size:0.9rem;">({{ data.tipo_tasa if data else 'EA' }}{% if data.tipo_tasa in ('NM','NT','NS') %} — Nominal{% endif %})</small>
                     {% elif data.variable_desconocida == 'n' %}
                         {{ resultado }}
-                        <small class="text-muted" style="font-size:0.9rem;">período(s) ({{ data.frecuencia_pago if data else '' }}(es)){% if data and data.n_breakdown %}{% endif %}</small>
+                        <small class="text-muted" style="font-size:0.9rem;">período(s){% if data and data.n_breakdown %} ({{ data.n_breakdown }}){% endif %}</small>
                     {% endif %}
                 </div>
                 {% if error %}
@@ -250,7 +222,6 @@ Simulador Banco · Interés compuesto
         vf: document.getElementById('field-vf'),
         i: document.getElementById('field-i'),
         n: document.getElementById('field-n'),
-        n_unit: document.getElementById('field-n-unit'),
     };
     const inputs = {
         vp: document.getElementById('vp'),
@@ -260,7 +231,6 @@ Simulador Banco · Interés compuesto
             document.getElementById('n_years'),
             document.getElementById('n_months'),
             document.getElementById('n_days'),
-            document.getElementById('unidad_tiempo_n'),
         ],
     };
 

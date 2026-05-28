@@ -26,6 +26,22 @@ UNIDAD_N_PERIODS = {
     'Años': 1,
 }
 
+# Rate type → natural periods per year for computing n
+# Efectivas: el período natural es el de la tasa misma
+# Nominales: el período natural es el de capitalización (m)
+RATE_TYPE_N_PPY = {
+    'EA': 1,
+    'ES': 2,
+    'ET': 4,
+    'EM': 12,
+    'NM': 12,
+    'NT': 4,
+    'NS': 2,
+    'MV': 12, 'CM': 12,
+    'TV': 4, 'CT': 4,
+    'SV': 2, 'CS': 2,
+}
+
 
 def convert_rate(rate_pct, rate_type, payment_frequency):
     """
@@ -61,23 +77,6 @@ def convert_rate(rate_pct, rate_type, payment_frequency):
         # Capitalización SEMESTRAL (m=2) — sin importar ppy
         tasa_semestral = r / 2
         ea = (1 + tasa_semestral) ** 2 - 1
-    elif rate_type == 'NV':
-    # Nominal Vencida genérica: la frecuencia de capitalización
-    # es igual a la frecuencia de pago (ppy)
-    # Cubre frecuencias no estándar: bimestral, quincenal, semanal, diaria, etc.
-        tasa_periodica_vencida = r / ppy
-        ea = (1 + tasa_periodica_vencida) ** ppy - 1
-    elif rate_type == 'NAA':
-        # Nominal Annual Anticipada, compounded monthly
-        # monthly anticipada = NAA / 12
-        # monthly vencida = monthly_anticipada / (1 - monthly_anticipada)
-        tasa_periodica_anticipada = r / ppy
-        if tasa_periodica_anticipada >= 1:
-            raise ValueError(
-                f"La tasa NAA es demasiado alta: " 
-                f"tasa periódica anticipada = {tasa_periodica_anticipada:.4%} >= 100.")
-        tasa_periodica_vencida = tasa_periodica_anticipada / (1 - tasa_periodica_anticipada)
-        ea = (1 + tasa_periodica_vencida) ** ppy - 1
     else:
         ea = r  # fallback
 
@@ -108,21 +107,8 @@ def ea_to_rate_type(ea, target_type, ppy):
     elif target_type in ('SV', 'CS', 'NS'):
         tasa_semestral = (1 + ea) ** (1 / 2) - 1
         return tasa_semestral * 2
-    elif target_type == 'NV':
-        tasa_periodica = (1 + ea) ** (1 / ppy) - 1
-        return tasa_periodica * ppy
-    elif target_type == 'NAA':
-        tasa_periodica_vencida = (1 + ea) ** (1 / ppy) - 1
-        if tasa_periodica_vencida >= 1:
-            raise ValueError(
-                f"La tasa EA es demasiado alta para convertir a NAA: "
-                f"tasa periódica vencida = {tasa_periodica_vencida:.4%} >= 100%")
-        tasa_periodica_anticipada = tasa_periodica_vencida / (1 + tasa_periodica_vencida)
-        return tasa_periodica_anticipada * ppy
     else:
         return ea  # fallback
-
-
 
 def calculate_anualidad(tipo, desconocida, vp, vf, r, i_rate, n, m):
     """
@@ -223,7 +209,7 @@ def calculate_anualidad(tipo, desconocida, vp, vf, r, i_rate, n, m):
 
 
 def calculate_interes_compuesto(desconocida, vp, vf, periodic_rate, n,
-                                 unidad_tiempo_n='Meses', tipo_tasa='EA', ppy=12):
+                                 tipo_tasa='EA'):
     """
     Return (result, error_string) for compound interest calculations.
     periodic_rate is the effective periodic rate (decimal).
@@ -249,13 +235,13 @@ def calculate_interes_compuesto(desconocida, vp, vf, periodic_rate, n,
                 return None, "VP, VF y n deben ser valores positivos para calcular i."
             raw_i = (vf / vp) ** (1 / n) - 1
             # Convertir la tasa cruda a EA según la unidad temporal de n
-            n_ppy = UNIDAD_N_PERIODS.get(unidad_tiempo_n, 12)
+            n_ppy = RATE_TYPE_N_PPY.get(tipo_tasa, 1)
             if n_ppy == 1:
                 ea = raw_i
             else:
                 ea = (1 + raw_i) ** n_ppy - 1
             # Convertir EA al tipo de tasa solicitado por el usuario
-            result = ea_to_rate_type(ea, tipo_tasa, ppy)
+            result = ea_to_rate_type(ea, tipo_tasa, 1)
             return result, None
         else:
             return None, "Variable desconocida no válida."
@@ -465,8 +451,6 @@ def interes_compuesto():
     if request.method == "POST":
         data['variable_desconocida'] = request.form.get('variable_desconocida', 'vf')
         data['tipo_tasa'] = request.form.get('tipo_tasa', 'EA')
-        data['frecuencia_pago'] = request.form.get('frecuencia_pago', 'Mensual')
-        data['unidad_tiempo_n'] = request.form.get('unidad_tiempo_n', 'Meses')
 
         raw_vp = request.form.get('vp', '').strip()
         raw_vf = request.form.get('vf', '').strip()
@@ -474,7 +458,6 @@ def interes_compuesto():
         raw_n_years = request.form.get('n_years', '0').strip()
         raw_n_months = request.form.get('n_months', '0').strip()
         raw_n_days = request.form.get('n_days', '0').strip()
-        raw_unidad = request.form.get('unidad_tiempo_n', 'Meses')
 
         vp = float(raw_vp) if raw_vp else 0.0
         vf = float(raw_vf) if raw_vf else 0.0
@@ -482,16 +465,9 @@ def interes_compuesto():
         n_years = float(raw_n_years) if raw_n_years else 0.0
         n_months = float(raw_n_months) if raw_n_months else 0.0
         n_days = float(raw_n_days) if raw_n_days else 0.0
-        unidad_tiempo_n_val = data.get('unidad_tiempo_n', 'Meses')
-        # Compute total n from años/meses/días based on unidad_tiempo_n
-        if unidad_tiempo_n_val == 'Años':
-            n = n_years + n_months / 12.0 + n_days / 360.0
-        elif unidad_tiempo_n_val == 'Meses':
-            n = n_years * 12 + n_months + n_days / 30.0
-        elif unidad_tiempo_n_val == 'Días':
-            n = n_years * 360 + n_months * 30 + n_days
-        else:
-            n = n_years + n_months / 12.0 + n_days / 360.0
+        # Compute total n from años/meses/días según el período natural del tipo de tasa
+        n_ppy = RATE_TYPE_N_PPY.get(data['tipo_tasa'], 1)
+        n = n_years * n_ppy + n_months * (n_ppy / 12.0) + n_days * (n_ppy / 360.0)
 
         # ── Validate non-negative values ──
         if vp < 0:
@@ -510,7 +486,6 @@ def interes_compuesto():
         data['n_months'] = n_months
         data['n_days'] = n_days
         data['periodos'] = n
-        data['unidad_tiempo_n'] = raw_unidad
 
         desconocida = data['variable_desconocida']
 
@@ -527,7 +502,26 @@ def interes_compuesto():
         # ── Rate conversion ──
         if error is None:
             try:
-                periodic_rate = convert_rate(tasa_val, data['tipo_tasa'], data['frecuencia_pago'])
+                r_decimal = tasa_val / 100.0
+                # Convertir a Tasa Efectiva Anual (EA) según la capitalización implícita del tipo
+                if data['tipo_tasa'] == 'EA':
+                    ea = r_decimal
+                elif data['tipo_tasa'] in ('ES', 'SV', 'CS', 'NS'):
+                    # Semestral: efectiva o nominal con m=2
+                    r_periodic = r_decimal if data['tipo_tasa'] == 'ES' else r_decimal / 2
+                    ea = (1 + r_periodic) ** 2 - 1
+                elif data['tipo_tasa'] in ('ET', 'TV', 'CT', 'NT'):
+                    # Trimestral: efectiva o nominal con m=4
+                    r_periodic = r_decimal if data['tipo_tasa'] == 'ET' else r_decimal / 4
+                    ea = (1 + r_periodic) ** 4 - 1
+                elif data['tipo_tasa'] in ('EM', 'MV', 'CM', 'NM'):
+                    # Mensual: efectiva o nominal con m=12
+                    r_periodic = r_decimal if data['tipo_tasa'] == 'EM' else r_decimal / 12
+                    ea = (1 + r_periodic) ** 12 - 1
+                else:
+                    ea = r_decimal
+                # Convertir EA a tasa periódica efectiva según la unidad de n
+                periodic_rate = (1 + ea) ** (1 / n_ppy) - 1
             except ValueError as ve:
                 error = str(ve)
             except Exception:
@@ -541,9 +535,7 @@ def interes_compuesto():
                 vf if desconocida != 'vf' else 0,
                 periodic_rate,
                 n if desconocida != 'n' else 0,
-                unidad_tiempo_n=data.get('unidad_tiempo_n', 'Meses'),
                 tipo_tasa=data['tipo_tasa'],
-                ppy=PERIODS_PER_YEAR[data['frecuencia_pago']],
             )
 
             if resultado is not None:
@@ -555,14 +547,11 @@ def interes_compuesto():
                     resultado = np.round(resultado, 4)
                 # Build n breakdown for result display
                 if desconocida == 'n' and resultado is not None:
-                    if data['unidad_tiempo_n'] == 'Años':
-                        yrs = int(resultado)
-                        mths = int(round((resultado - yrs) * 12))
-                        data['n_breakdown'] = f"{yrs} años, {mths} meses"
-                    elif data['unidad_tiempo_n'] == 'Meses':
-                        yrs = int(resultado // 12)
-                        mths = int(resultado % 12)
-                        data['n_breakdown'] = f"{yrs} años, {mths} meses"
+                    n_ppy = RATE_TYPE_N_PPY.get(data['tipo_tasa'], 1)
+                    total_months = resultado * (12.0 / n_ppy)
+                    yrs = int(total_months // 12)
+                    mths = int(round(total_months % 12))
+                    data['n_breakdown'] = f"{yrs} años, {mths} meses"
 
     return render_template('interes_compuesto.html', resultado=resultado, error=error, data=data)
 

@@ -145,11 +145,9 @@ Simulador Banco · Anualidad
                                 <option value="EM" {{ 'selected' if data and data.tipo_tasa == 'EM' else '' }}>EM — Efectiva Mensual</option>
                                 <option value="ET" {{ 'selected' if data and data.tipo_tasa == 'ET' else '' }}>ET — Efectiva Trimestral</option>
                                 <option value="ES" {{ 'selected' if data and data.tipo_tasa == 'ES' else '' }}>ES — Efectiva Semestral</option>
-                                <option value="MV" {{ 'selected' if data and data.tipo_tasa == 'MV' else '' }}>MV / CM / NM — Nominal Mensual Vencida</option>
-                                <option value="TV" {{ 'selected' if data and data.tipo_tasa == 'TV' else '' }}>TV / CT / NT — Nominal Trimestral Vencida</option>
-                                <option value="SV" {{ 'selected' if data and data.tipo_tasa == 'SV' else '' }}>SV / CS / NS — Nominal Semestral Vencida</option>
-                                <option value="NV" {{ 'selected' if data and data.tipo_tasa == 'NV' else '' }}>NV — Nominal Vencida (otra frecuencia)</option>
-                                <option value="NAA" {{ 'selected' if data and data.tipo_tasa == 'NAA' else '' }}>NAA — Nominal Anual Anticipada</option>
+                                <option value="NM" {{ 'selected' if data and data.tipo_tasa == 'NM' else '' }}>NM — Nominal Mes Vencido / CM / MV (% anual que se divide entre 12)</option>
+                                <option value="NT" {{ 'selected' if data and data.tipo_tasa == 'NT' else '' }}>NT — Nominal Trimestre Vencido / CT / TV (se divide entre 4)</option>
+                                <option value="NS" {{ 'selected' if data and data.tipo_tasa == 'NS' else '' }}>NS — Nominal Semestral Vencido / CS / SV (se divide entre 2)</option>
                             </select>
                             <div class="form-text">La tasa se convertirá automáticamente a la frecuencia de pago seleccionada.</div>
                         </div>
