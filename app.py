@@ -264,11 +264,26 @@ def amortizacion():
         tasa_val = float(request.form["tasa_interes"])
         tipo_tasa = request.form.get("tipo_tasa", "EA")
         frecuencia_pago = request.form.get("frecuencia_pago", "Mensual")
-        periodos = int(request.form["periodos"])
+
+        # Optional n calculation from years/months/days
+        raw_n_years = request.form.get("n_years", "").strip()
+        raw_n_months = request.form.get("n_months", "").strip()
+        raw_n_days = request.form.get("n_days", "").strip()
+        n_years = float(raw_n_years) if raw_n_years else 0.0
+        n_months = float(raw_n_months) if raw_n_months else 0.0
+        n_days = float(raw_n_days) if raw_n_days else 0.0
+
+        # If años/meses/días are provided, compute periodos from them
+        if n_years or n_months or n_days:
+            ppy = PERIODS_PER_YEAR[frecuencia_pago]
+            periodos = int(n_years * ppy + n_months * (ppy / 12.0) + n_days * (ppy / 360.0))
+        else:
+            periodos = int(request.form["periodos"])
 
         # Optional extra payment
         raw_periodo_extra = request.form.get("periodo_extraordinario", "").strip()
         raw_monto_extra = request.form.get("monto_extraordinario", "").strip()
+        raw_tipo_abono = request.form.get("tipo_abono", "").strip()
 
         # Convert rate
         periodic_rate = convert_rate(tasa_val, tipo_tasa, frecuencia_pago)
@@ -330,6 +345,21 @@ def amortizacion():
                 elif saldo_nuevo <= 0.01:
                     tabla.append(fila)
                     break
+                    
+                if periodos_restantes > 0 and saldo_nuevo > 0.01:
+                    if raw_tipo_abono == "reducir_cuota":
+
+                        cuota_actual = npf.pmt(
+                            periodic_rate,
+                            periodos_restantes,
+                            -saldo_nuevo
+                        )
+                    elif raw_tipo_abono == "abono_capital":
+                        # Mantener misma cuota
+                        cuota_actual = cuota_original
+                    elif saldo_nuevo <= 0.01:
+                        tabla.append(fila)
+                        break
 
             tabla.append(fila)
             saldo = max(saldo_nuevo, 0.0)
@@ -341,6 +371,9 @@ def amortizacion():
         data['tasa_interes'] = tasa_val
         data['tipo_tasa'] = tipo_tasa
         data['frecuencia_pago'] = frecuencia_pago
+        data['n_years'] = n_years
+        data['n_months'] = n_months
+        data['n_days'] = n_days
         data['periodos'] = periodos
         data['cuota_original'] = round(cuota_original, 3)
         data['tiene_extra'] = tiene_extra

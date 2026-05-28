@@ -51,6 +51,10 @@ Simulador Banco · Anualidad
         font-size: 0.75rem;
         font-weight: 600;
     }
+    .form-control::placeholder,
+    textarea::placeholder {
+        opacity: 0.4;
+    }
 </style>
 {% endblock %}
 
@@ -87,8 +91,6 @@ Simulador Banco · Anualidad
                                 <option value="vf" {{ 'selected' if data and data.variable_desconocida == 'vf' else '' }}>Valor Futuro (VF)</option>
                                 <option value="r" {{ 'selected' if data and data.variable_desconocida == 'r' else '' }}>Renta / Cuota (R)</option>
                                 <option value="i" {{ 'selected' if data and data.variable_desconocida == 'i' else '' }}>Tasa de interés (i)</option>
-                                <!--option value="n" {{ 'selected' if data and data.variable_desconocida == 'n' else '' }}>Número de períodos (n)</option!-->
-                                <!--option value="m" {{ 'selected' if data and data.variable_desconocida == 'm' else '' }}>Tiempo de diferimiento (m)</option!-->
                             </select>
                             <div class="form-text">Selecciona qué variable deseas calcular. Los campos correspondientes se habilitarán o deshabilitarán automáticamente.</div>
                         </div>

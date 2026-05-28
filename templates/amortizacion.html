@@ -39,6 +39,10 @@ Simulador Banco · Amortización
         font-size: 0.8rem;
         color: #78909c;
     }
+    .form-control::placeholder,
+    textarea::placeholder {
+        opacity: 0.4;
+    }
 </style>
 {% endblock %}
 
@@ -46,9 +50,9 @@ Simulador Banco · Amortización
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <h1 class="display-5 mb-1">Tabla de amortización — Sistema Francés</h1>
+            <h1 class="display-5 mb-1">Tabla de amortización</h1>
             <p class="text-muted mb-4">
-                Genera la tabla de amortización bajo el método de cuota fija (sistema francés).
+                Genera la tabla de amortización bajo el método de cuota fija o de reducción de cuota.
             </p>
 
             <form method="POST">
@@ -111,6 +115,34 @@ Simulador Banco · Amortización
                             <label for="periodos">Número de períodos</label>
                             <input type="number" class="form-control" name="periodos" id="periodos" placeholder="Ej: 12"
                                    value="{{ data.periodos if data else '' }}" required>
+                        </div>
+
+                        <details class="field-group" style="margin-bottom: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: #37474f;">Calcular períodos a partir de años, meses, días</summary>
+                            <div style="margin-top: 0.75rem;">
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <label class="small text-muted" for="n_years">Años</label>
+                                        <input type="number" step="any" class="form-control" name="n_years" id="n_years"
+                                               placeholder="6"
+                                               value="{{ data.n_years if data and data.n_years is not none else '' }}">
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="small text-muted" for="n_months">Meses</label>
+                                        <input type="number" step="any" class="form-control" name="n_months" id="n_months"
+                                               placeholder="7"
+                                               value="{{ data.n_months if data and data.n_months is not none else '' }}">
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="small text-muted" for="n_days">Días</label>
+                                        <input type="number" step="any" class="form-control" name="n_days" id="n_days"
+                                               placeholder="0"
+                                               value="{{ data.n_days if data and data.n_days is not none else '' }}">
+                                    </div>
+                                </div>
+                                <div class="form-text mt-2">Si llenas estos campos, el número de períodos se calculará automáticamente según la frecuencia de pago seleccionada.</div>
+                            </div>
+                        </details>
                             <div class="form-text">Cantidad total de períodos del crédito.</div>
                         </div>
 
@@ -121,6 +153,13 @@ Simulador Banco · Amortización
                                     <label for="periodo_extraordinario">Período del pago extra</label>
                                     <input type="number" class="form-control" name="periodo_extraordinario" id="periodo_extraordinario" placeholder="Ej: 5" min="1"
                                            value="{{ data.periodo_extra if data and data.tiene_extra else '' }}">
+                                    <div class="field-group">
+                                        <label for="tipo_abono">Tipo de abono</label>
+                                        <select name="tipo_abono">
+                                            <option value="abono_capital">Abono a capital</option>
+                                            <option value="reducir_cuota">Reducción de cuota</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div style="flex: 1;">
                                     <label for="monto_extraordinario">Monto del pago extra</label>
@@ -183,4 +222,44 @@ Simulador Banco · Amortización
         </div>
     </div>
 </div>
+
+<script>
+(function() {
+    const nYears = document.getElementById('n_years');
+    const nMonths = document.getElementById('n_months');
+    const nDays = document.getElementById('n_days');
+    const periodosField = document.getElementById('periodos');
+    const freqSelect = document.getElementById('frecuencia_pago');
+
+    const PPY = {
+        'Mensual': 12,
+        'Quincenal': 24,
+        'Bimestral': 6,
+        'Trimestral': 4,
+        'Cuatrimestral': 3,
+        'Semestral': 2,
+        'Anual': 1,
+        'Semanal': 52,
+        'Diario': 360,
+    };
+
+    function updatePeriodos() {
+        const years = parseFloat(nYears.value) || 0;
+        const months = parseFloat(nMonths.value) || 0;
+        const days = parseFloat(nDays.value) || 0;
+
+        if (years || months || days) {
+            const ppy = PPY[freqSelect.value] || 12;
+            const total = years * ppy + months * (ppy / 12.0) + days * (ppy / 360.0);
+            periodosField.value = Math.round(total);
+        }
+    }
+
+    nYears.addEventListener('input', updatePeriodos);
+    nMonths.addEventListener('input', updatePeriodos);
+    nDays.addEventListener('input', updatePeriodos);
+    freqSelect.addEventListener('change', updatePeriodos);
+})();
+</script>
+
 {% endblock %}
